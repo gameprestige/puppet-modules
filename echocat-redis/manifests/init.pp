@@ -28,17 +28,17 @@ class redis::install (
 
 	exec {
 		"Download and untar redis ${::redis::install::redis_version}":
-			command => "wget -O - http://redis.googlecode.com/files/redis-${::redis::install::redis_version}.tar.gz | tar xz",
-			creates => "/opt/redis-${::redis::install::redis_version}",
-			cwd => "/opt";
+			command => "wget -O - http://download.redis.io/releases/redis-${::redis::install::redis_version}.tar.gz | tar xz",
+			creates => "/tmp/redis-${::redis::install::redis_version}",
+			cwd => "/tmp";
 	}
 
 	# if this fails, then a 'make distclean' can help
 	exec {
 		"Compile redis":
 			command => 'make',
-			creates => "/opt/redis-${redis_version}/src/redis-server",
-			cwd => "/opt/redis-${::redis::install::redis_version}/",
+			creates => "/tmp/redis-${redis_version}/src/redis-server",
+			cwd => "/tmp/redis-${::redis::install::redis_version}/",
 			require => [
 				Package['make'],
 				Package['gcc'],
@@ -48,9 +48,9 @@ class redis::install (
 	}
 
 	file {
-		"/opt/redis":
+		"/tmp/redis":
 			ensure => link,
-			target => "/opt/redis-${::redis::install::redis_version}/src/",
+			target => "/tmp/redis-${::redis::install::redis_version}/src/",
 			require => Exec["Compile redis"];
 	}
 }
@@ -75,8 +75,14 @@ class redis::install (
 #   Default: 0
 # [*redis_nr_dbs*]
 #   Number of databases provided by redis. Default: 1
+# [*redis_dbfilename*]
+#   Name of database dump file. Default: dump.rdb
 # [*redis_dir*]
-#   Path for persistent data. Path is <redis_dir>_<redis_name>
+#   Path for persistent data. Path is <redis_dir>/redis_<redis_name>/. Default: /var/lib
+# [*redis_log_dir*]
+#   Path for log. Full log path is <redis_log_dir>/redis_<redis_name>.log. Default: /var/log
+# [*redis_run_dir*]
+#		Path for pid file. Full run path is <redis_run_dir>/redis_<redis_name>.pid. Default: /var/run
 # [*redis_loglevel*]
 #   Loglevel of Redis. Default: notice
 # [*running*]
@@ -85,17 +91,21 @@ class redis::install (
 #   Configure if Redis is started at boot. Default: true
 #
 define redis::server (
-		$redis_name      = $name,
-		$redis_memory    = "100mb",
-		$redis_ip        = "127.0.0.1",
-		$redis_port      = 6379,
-		$redis_mempolicy = "allkeys-lru",
-		$redis_timeout   = 0,
-		$redis_nr_dbs    = 1,
-		$redis_dir       = "/var/lib/redis",
-		$redis_loglevel  = "notice",
-		$running         = "true",
-		$enabled         = "true"
+		$redis_name       = $name,
+		$redis_memory     = "100mb",
+		$redis_ip         = "127.0.0.1",
+		$redis_port       = 6379,
+		$redis_mempolicy  = "allkeys-lru",
+		$redis_timeout    = 0,
+		$redis_nr_dbs     = 1,
+		$redis_dbfilename = "dump.rdb"
+		$redis_dir        = "/var/lib",
+		$redis_log_dir    = "/var/log",
+		$redis_run_dir    = "/var/run",
+		$redis_loglevel   = "notice",
+		$redis_appedfsync = "everysec",
+		$running          = "true",
+		$enabled          = "true"
 ) {
 
 	# redis conf file
