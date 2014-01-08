@@ -98,14 +98,14 @@ define redis::server (
 		$redis_mempolicy  = "allkeys-lru",
 		$redis_timeout    = 0,
 		$redis_nr_dbs     = 1,
-		$redis_dbfilename = "dump.rdb"
+		$redis_dbfilename = "dump.rdb",
 		$redis_dir        = "/var/lib",
 		$redis_log_dir    = "/var/log",
 		$redis_run_dir    = "/var/run",
 		$redis_loglevel   = "notice",
 		$redis_appedfsync = "everysec",
 		$running          = "true",
-		$enabled          = "true"
+		$enabled          = "true",
 ) {
 
 	# redis conf file
