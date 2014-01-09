@@ -7,7 +7,7 @@
 # processname: redis-server
 # config:      /etc/redis.conf
 # config:      /etc/sysconfig/redis
-# pidfile:     <%= redis_run_dir %>/redis_<%= redis_name %>.pid
+# pidfile:     /var/run/redis_<%= redis_name %>.pid
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -18,9 +18,9 @@
 # Check that networking is up.
 [ "$NETWORKING" = "no" ] && exit 0
 
-redis="/opt/redis/redis-server"
+redis="<%= redis_install_dir %>/redis-server"
 prog="$(basename $redis)_<%= redis_name %>"
-pidfile="<%= redis_run_dir %>/redis_<%= redis_name %>.pid"
+pidfile="/var/run/redis_<%= redis_name %>.pid"
 
 REDIS_CONF_FILE="/etc/redis_<%= redis_name %>.conf"
 
@@ -50,6 +50,7 @@ stop() {
 
 restart() {
     stop
+    sleep 1
     start
 }
 
