@@ -214,7 +214,7 @@ define redis::server (
 		$running          = "true",
 		$enabled          = "true",
 ) {
-	$redis_install_dir = $::redis::params::redis_install_dir
+	$redis_install_dir = $::redis::install::redis_install_dir
 	$redis_init_script = $::operatingsystem ? {
 		/(Debian|Ubuntu)/                               => "redis/etc/init.d/debian_redis-server.erb",
 		/(Fedora|RedHat|CentOS|OEL|OracleLinux|Amazon)/ => "redis/etc/init.d/redhat_redis-server.erb",
