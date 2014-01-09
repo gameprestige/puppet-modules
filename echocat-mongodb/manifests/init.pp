@@ -11,6 +11,16 @@ class mongodb (
   $old_servicename = $mongodb::params::old_servicename
 ) inherits mongodb::params {
 
+    # ensure dbdir/logdir exist.
+    file { [$dbdir, $logdir]:
+      before => Anchor['mongodb::install::begin'],
+
+      ensure => directory,
+      mode   => 0644,
+      owner  => $run_as_user,
+      group  => $run_as_group,
+    }
+
     anchor{ 'mongodb::begin':
         before => Anchor['mongodb::install::begin'],
     }
