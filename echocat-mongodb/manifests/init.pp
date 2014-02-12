@@ -13,12 +13,12 @@ class mongodb (
 
     # ensure dbdir/logdir exist.
     file { [$dbdir, $logdir]:
-      before => Anchor['mongodb::install::begin'],
+        require => Anchor['mongodb::install::end'],
 
-      ensure => directory,
-      mode   => 0644,
-      owner  => $run_as_user,
-      group  => $run_as_group,
+        ensure => directory,
+        mode   => 0644,
+        owner  => $run_as_user,
+        group  => $run_as_group,
     }
 
     anchor{ 'mongodb::begin':
@@ -37,7 +37,7 @@ class mongodb (
             class { 'mongodb::install': }
         }
         default: {
-            fail "Unsupported OS ${::operatingsystem} in 'mongodb' module"
+            fail("Unsupported OS ${::operatingsystem} in 'mongodb' module")
         }
     }
 

@@ -20,8 +20,12 @@ server {
 <% if @root -%>
   root <%= @root %>;
 <% end -%>
-<% if @passenger_cgi_param -%><% @passenger_cgi_param.each do |key,value| -%>
-  passenger_set_cgi_param  <%= key %> <%= value %>;
+<%# make sure sequence of generated passenger cgi params is stable. -%>
+<%# it's a big issue that default ruby hash's each method randomize -%>
+<%# key sequence each time. it causes nginx config changes each time -%>
+<%# when i use this module. sigh... -%>
+<% if @passenger_cgi_param -%><% @passenger_cgi_param.keys.sort.each do |key| -%>
+  passenger_set_cgi_param  <%= key %> <%= @passenger_cgi_param[key] %>;
 <% end -%><% end -%>
 <% @proxy_set_header.each do |header| -%>
   proxy_set_header        <%= header %>;

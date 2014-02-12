@@ -16,7 +16,13 @@ class redis inherits redis::params {}
 # === Parameters
 #
 # [*redis_version*]
-#   The redis version to be installed.
+#   The redis version to be installed. By default, the latest stable build will be installed.
+#
+# [*redis_build_dir*]
+#   The dir to store redis source code.
+#
+# [*redis_install_dir*]
+#   The dir to which the newly built redis binaries are copied. Default value is '/usr/bin'.
 #
 class redis::install (
 	$redis_version     = $redis::params::redis_version,
@@ -56,26 +62,32 @@ class redis::install (
 
 		command => "mkdir -p ${redis_build_dir}",
 		creates => "${redis_build_dir}",
-		path => "${::path}",
-		cwd => '/',
-		user => 'root',
-		group => 'root',
+		path    => "${::path}",
+		cwd     => '/',
+		user    => 'root',
+		group   => 'root',
 	}
 
 	file { "${redis_build_dir}":
 		ensure => directory,
 	}
 
-	exec { "Download and untar redis ${::redis::install::redis_version}":
-		require => File["${redis_build_dir}"],
-		before => Anchor['redis::prepare_build'],
+    if $redis_version == $::redis::params::redis_version {
+        $redis_download_url = "http://download.redis.io/redis-stable.tar.gz"
+    } else {
+        $redis_download_url = "http://download.redis.io/releases/redis-${redis_version}.tar.gz"
+    }
 
-		command => "wget -O - http://download.redis.io/releases/redis-${::redis::install::redis_version}.tar.gz | tar xz",
+	exec { "Download and untar redis ${redis_version}":
+		require => File["${redis_build_dir}"],
+		before  => Anchor['redis::prepare_build'],
+
+		command => "wget -O - ${redis_download_url} | tar xz",
 		creates => "${redis_build_dir}/redis-${::redis::install::redis_version}",
-		path => "${::path}",
-		cwd => "${redis_build_dir}",
-		user => 'root',
-		group => 'root',
+		path    => "${::path}",
+		cwd     => "${redis_build_dir}",
+		user    => 'root',
+		group   => 'root',
 	}
 
 	anchor { 'redis::prepare_build':
@@ -86,10 +98,10 @@ class redis::install (
 	exec { 'redis::compile':
 		command => 'make',
 		creates => "${redis_build_dir}/redis-${redis_version}/src/redis-server",
-		cwd => "${redis_build_dir}/redis-${::redis::install::redis_version}/",
-		path => "${::path}",
-		user => 'root',
-		group => 'root',
+		cwd     => "${redis_build_dir}/redis-${::redis::install::redis_version}/",
+		path    => "${::path}",
+		user    => 'root',
+		group   => 'root',
 	}
 
 	file { "${redis_build_dir}/redis":
@@ -103,65 +115,19 @@ class redis::install (
 		require => File["${redis_build_dir}/redis"],
 	}
 
-	# install redis to system path.
-	file { "${redis_install_dir}/redis-benchmark":
+	$redis_binaries = [
+		"redis-benchmark",
+		"redis-check-aof",
+		"redis-check-dump",
+		"redis-cli",
+		"redis-sentinel",
+		"redis-server",
+	]
+	redis::install::binary { $redis_binaries:
 		require => Anchor['redis::install'],
 
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-benchmark",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
-	}
-
-	file { "${redis_install_dir}/redis-check-aof":
-		require => Anchor['redis::install'],
-
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-check-aof",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
-	}
-
-	file { "${redis_install_dir}/redis-check-dump":
-		require => Anchor['redis::install'],
-
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-check-dump",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
-	}
-
-	file { "${redis_install_dir}/redis-cli":
-		require => Anchor['redis::install'],
-
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-cli",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
-	}
-
-	file { "${redis_install_dir}/redis-sentinel":
-		require => Anchor['redis::install'],
-
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-sentinel",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
-	}
-
-	file { "${redis_install_dir}/redis-server":
-		require => Anchor['redis::install'],
-
-		ensure => file,
-		source => "${redis_build_dir}/redis/redis-server",
-		mode => 0755,
-		owner => 'root',
-		group => 'root',
+		redis_build_dir   => $redis_build_dir,
+		redis_install_dir => $redis_install_dir,
 	}
 }
 
@@ -265,5 +231,22 @@ define redis::server (
 		hasstatus  => true,
 		hasrestart => true,
 		require    => File["/etc/init.d/redis-server_${redis_name}"],
+	}
+}
+
+# Helper define for installing redis binary.
+define redis::install::binary (
+	$redis_binary = $name,
+	$redis_build_dir,
+	$redis_install_dir,
+) {
+	file { "${redis_install_dir}/${redis_binary}":
+		require => Anchor['redis::install'],
+
+		ensure => file,
+		source => "${redis_build_dir}/redis/${redis_binary}",
+		mode   => 0755,
+		owner  => 'root',
+		group  => 'root',
 	}
 }
