@@ -19,6 +19,10 @@ class nginx::package::redhat (
   $package_name   = 'nginx',
 ) {
 
+  if $caller_module_name != $module_name {
+    warning("${name} is deprecated as a public API of the ${module_name} module and should no longer be directly included in the manifest.")
+  }
+
   case $::operatingsystem {
     'fedora': {
       # nginx.org does not supply RPMs for fedora
@@ -26,7 +30,7 @@ class nginx::package::redhat (
       # fedora 19 has 1.4.x packages are in
 
       # fedora 18 users will need to supply their own nginx 1.4 rpms and/or repo
-      if $::lsbmajdistrelease < 19 {
+      if $::lsbmajdistrelease and $::lsbmajdistrelease < 19 {
         notice("${::operatingsystem} ${::lsbmajdistrelease} does not supply nginx >= 1.4 packages")
       }
     }
@@ -55,15 +59,12 @@ class nginx::package::redhat (
           gpgkey   => 'http://nginx.org/keys/nginx_signing.key',
           before   => Package[$package_name],
         }
-      }
-    }
-  }
 
-  if $manage_repo {
-    #Define file for nginx-repo so puppet doesn't delete it
-    file { '/etc/yum.repos.d/nginx-release.repo':
-      ensure  => present,
-      require => Yumrepo['nginx-release'],
+        file { '/etc/yum.repos.d/nginx-release.repo':
+          ensure  => present,
+          require => Yumrepo['nginx-release'],
+        }
+      }
     }
   }
 
