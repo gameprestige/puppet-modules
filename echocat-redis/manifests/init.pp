@@ -228,6 +228,7 @@ define redis::server (
 		before  => Service["redis-server_${redis_name}"],
 		command => "mkdir -p '${redis_log_dir}'",
 		user    => root,
+		path    => $::path,
 		unless  => "test -d '${redis_log_dir}'",
 	}
 
