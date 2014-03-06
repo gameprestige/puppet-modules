@@ -224,6 +224,13 @@ define redis::server (
 		],
 	}
 
+	exec { "redis::server::${redis_log_dir}":
+		before  => Service["redis-server_${redis_name}"],
+		command => "mkdir -p '${redis_log_dir}'",
+		user    => root,
+		unless  => "test -d '${redis_log_dir}'",
+	}
+
 	# manage redis service
 	service { "redis-server_${redis_name}":
 		ensure     => $running,
