@@ -1,0 +1,12 @@
+[submodule "puppet-ufw"]
+	path = puppet-ufw
+	url = https://github.com/gameprestige/puppet-ufw
+[submodule "puppet-nginx"]
+	path = puppet-nginx
+	url = https://github.com/gameprestige/puppet-nginx
+[submodule "puppet-redis"]
+	path = puppet-redis
+	url = https://github.com/gameprestige/puppet-redis
+[submodule "puppet-mongodb"]
+	path = puppet-mongodb
+	url = https://github.com/gameprestige/puppet-mongodb
